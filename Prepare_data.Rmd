@@ -1,0 +1,106 @@
+---
+title: "Prepare data from 2009 to 2014"
+author: "Penny (Peng)"
+date: "1/5/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### RAW data
+
+The data I am using is from Health Data NY, Statewide Planning and Research Cooperative System (SPARCS). The raw data includes the NY hospitalization inpatient discharges for all diseases from 2009 to 2014. 
+
+Due to the size, all the raw data are saved in dropbox with the following link:
+<https://www.dropbox.com/sh/ni1q30q79lo194b/AABgUA6BgAt2MAZRDstB_5hWa?dl=0>
+
+Data from 2009-2014 are preprocessed and combined into one csv file for analysis used in this project.
+
+## The preprocessing processes are as follows:
+* Remove columns that will not be used in this project.
+
+* Subset data to find those with Mental Diseases & Disorders in NYC
+    1. Subset data with patients from NYC
+    2. Subset data with patients of mental diseases and disorders
+    
+    Based on the diagnosis of mental diseases and disorders, DRG code is used to extract mental diseases and disorders hospilization in the dataset. Neurological diseases and Drug & Alcohol abuses are excluded from the dataset. 
+    
+    Details of DRG code used are listed here: https://github.com/super-penguin/SPARCS-health-data.
+
+* Combine data from 2009-2014 into one csv file for future analysis.
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+# read files with data from 2009-2014
+df14 <- 
+    read.csv("Hospital_Inpatient_Discharges__SPARCS_De-Identified___2014.csv")
+df13 <- 
+    read.csv("Hospital_Inpatient_Discharges__SPARCS_De-Identified___2013.csv")
+df12 <- 
+    read.csv("Hospital_Inpatient_Discharges__SPARCS_De-Identified___2012.csv")
+df11 <- 
+    read.csv("Hospital_Inpatient_Discharges__SPARCS_De-Identified___2011.csv")
+df10 <- 
+    read.csv("Hospital_Inpatient_Discharges__SPARCS_De-Identified___2010.csv")
+df09 <- 
+    read.csv("Hospital_Inpatient_Discharges__SPARCS_De-Identified___2009.csv")
+
+
+# List all the columns which will not be used in this project
+# Same them into a remove list: rm.col
+rm.col<- c("APR.Medical.Surgical.Description", "Payment.Typology.2",
+           "Payment.Typology.3", "Payment.Topology.2" , "Payment.Typology.3",
+           "Source.of.Payment.2", "Source.of.Payment.3","Birth.Weight", 
+           "Abortion.Edit.Indicator",
+           "Attending.Provider.License.Number",
+           "Operating.Provider.License.Number",
+           "Other.Provider.License.Number") 
+
+# Subset data to find those with Mental Diseases & Disorders in NYC
+County <- c("Bronx","Kings", "Manhattan", "Queens", "Richmond")
+Mental.Code<- c(740, 750, 751, 752, 753, 754, 755, 756, 757, 758, 759, 760)
+
+df14.mental<- subset(df14[,!(names(df14) %in% rm.col)],
+                     (Hospital.County %in% County) & 
+                         (APR.DRG.Code %in% Mental.Code))
+
+df13.mental<- subset(df13[,!(names(df13) %in% rm.col)],
+                     (Hospital.County %in% County) &
+                         (APR.DRG.Code %in% Mental.Code))
+
+df12.mental<- subset(df12[,!(names(df12) %in% rm.col)],
+                    (Hospital.County %in% County) &
+                        (APR.DRG.Code %in% Mental.Code))
+
+df11.mental<- subset(df11[,!(names(df11) %in% rm.col)],
+                     (Hospital.County %in% County) &
+                         (APR.DRG.Code %in% Mental.Code))
+
+df10.mental<- subset(df10[,!(names(df10) %in% rm.col)],
+                     (Hospital.County %in% County) &
+                         (APR.DRG.Code %in% Mental.Code))
+
+df09.mental<- subset(df09[,!(names(df09) %in% rm.col)],
+                     (Hospital.County %in% County) &
+                         (APR.DRG.Code %in% Mental.Code))
+
+# correct the column name difference of those files
+names(df09.mental)[names(df09.mental) == "Source.of.Payment.1"] <- 
+    "Payment.Typology.1"
+names(df10.mental)[names(df10.mental) == "Source.of.Payment.1"] <- 
+    "Payment.Typology.1"
+names(df11.mental)[names(df11.mental) == "Facility.ID"] <- 
+    "Facility.Id"
+
+# combine all the files into one csv file
+# name the file as "NYC_inpatient_discharge_mental.csv""
+df.n <- c('df14.mental','df13.mental','df12.mental', 
+          "df11.mental", "df10.mental", "df09.mental")
+x.list <- lapply(df.n, get)
+NYC.mental<- do.call(rbind, x.list)
+
+# save the combined file for further analysis
+rownames(NYC.mental) <- NULL
+write.csv(NYC.mental, "NYC_inpatient_discharge_mental.csv")
+```

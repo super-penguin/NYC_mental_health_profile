@@ -1,0 +1,31 @@
+Hospital Inpatient Discharges Dataset 2014
+
+Description:
+A dataset containing all the mental illnesses hospital inpatient discharges information in 2014, New York City.
+
+
+Format:
+A data frame with 57129 rows and 16 variables:
+#' \describe{
+#'   \item{Hospital.County}{The five counties in New York City}
+#'   \item{Age.Group}{Patient Age groups: 0-17, 18-29, 30-49, 50-69, 70 or Older}
+#'   \item{Gender}{Patient gender information: F - female, M - male}
+#'   \item{Race}{Patient race information (White, Black/African American, Other Race, Multi-racial)}
+#'   \item{Length.of.Stay}{The length of hospitalization for patients in days}
+#'   \item{Admit.Day.of.Week}{The day of admission for each patient (MON, TUE, WED, THU, FRI, SAT, SUN)}
+#'   \item{APR.DRG.Code}{All Patient Refined Diagnosis Related Group Code (3 digits)}
+#'   \item{APR.DRG.Description}{All Patient Refined Diagnosis Related Group}
+#'   \item{APR.Severity.of.Illness.Code}{“1” = Minor Severity of Illness;
+#'   “2” = Moderate Severity of Illness“3” = Major Severity of Illness;
+#'   “4” = Extreme Severity of Illness}
+#'   \item{Payment.Typology}{Payment methods include: Blue Cross/Blue Shield, Department of Corrections,
+#'   Federal/State/Local/VA, Managed Care, Unspecified, Medicaid, Medicare, Miscellaneous/Other,
+#'   Private Health Insurance, Self-Pay, Unknown}
+#'   \item{Emergency.Department.Indicator}{Indicating if the patient is admitted through the emergency
+#'   department or not. Two levels: Y(Yes) or N(No)}
+#'   \item{Total.Costs}{Total cost for hopitalization in US dollars($989.20-$7108.73)}
+#'
+#' }
+#'
+ 
+"df14.mental"

@@ -1,0 +1,430 @@
+df14.mental 
+
+ 39  Variables      57129  Observations
+------------------------------------------------------------------------------------------------------------
+Health.Service.Area 
+            n       missing      distinct         value 
+        57129             0             1 New York City 
+
+New York City (57129, 1)
+------------------------------------------------------------------------------------------------------------
+Hospital.County 
+       n  missing distinct 
+   57129        0        5 
+
+lowest : Bronx     Kings     Manhattan Queens    Richmond 
+highest: Bronx     Kings     Manhattan Queens    Richmond  
+
+Bronx (9008, 0.158), Kings (14696, 0.257), Manhattan (18526, 0.324), Queens (12109, 0.212), Richmond (2790,
+0.049)
+------------------------------------------------------------------------------------------------------------
+Operating.Certificate.Number 
+       n  missing distinct     Info     Mean      Gmd      .05      .10      .25      .50      .75      .90 
+   57129        0       39    0.998  7001725     1221  7000002  7000008  7001016  7002001  7002054  7003004 
+     .95 
+ 7003013 
+
+lowest : 7000001 7000002 7000006 7000008 7000014, highest: 7003007 7003010 7003013 7004003 7004010 
+------------------------------------------------------------------------------------------------------------
+Facility.Id 
+       n  missing distinct     Info     Mean      Gmd      .05      .10      .25      .50      .75      .90 
+   57129        0       51    0.998     1461    246.6     1165     1172     1301     1439     1626     1635 
+     .95 
+    1692 
+
+lowest : 1164 1165 1168 1169 1172, highest: 1738 1740 3058 3376 3975 
+------------------------------------------------------------------------------------------------------------
+Facility.Name 
+       n  missing distinct 
+   57129        0       51 
+
+lowest : Bellevue Hospital Center                           Bronx-Lebanon Hospital Center - Concourse Division Bronx-Lebanon Hospital Center - Fulton Division    Brookdale Hospital Medical Center                  Brooklyn Hospital Center - Downtown Campus        
+highest: Staten Island University Hosp-North                Staten Island University Hosp-South                University Hospital of Brooklyn                    Woodhull Medical & Mental Health Center            Wyckoff Heights Medical Center                     
+------------------------------------------------------------------------------------------------------------
+Age.Group 
+       n  missing distinct 
+   57129        0        5 
+
+lowest : 0 to 17     18 to 29    30 to 49    50 to 69    70 or Older
+highest: 0 to 17     18 to 29    30 to 49    50 to 69    70 or Older 
+
+0 to 17 (4557, 0.080), 18 to 29 (14430, 0.253), 30 to 49 (21569, 0.378), 50 to 69 (14231, 0.249), 70 or
+Older (2342, 0.041)
+------------------------------------------------------------------------------------------------------------
+Zip.Code...3.digits 
+       n  missing distinct 
+   57129        0       46 
+
+lowest :     100 101 103 104, highest: 144 146 147 148 OOS 
+------------------------------------------------------------------------------------------------------------
+Gender 
+       n  missing distinct 
+   57129        0        2 
+
+F (26153, 0.458), M (30976, 0.542)
+------------------------------------------------------------------------------------------------------------
+Race 
+       n  missing distinct 
+   57129        0        4 
+
+Black/African American (22643, 0.396), Multi-racial (112, 0.002), Other Race (19691, 0.345), White (14683,
+0.257)
+------------------------------------------------------------------------------------------------------------
+Ethnicity 
+       n  missing distinct 
+   57129        0        4 
+
+Multi-ethnic (53, 0.001), Not Span/Hispanic (43789, 0.766), Spanish/Hispanic (10279, 0.180), Unknown (3008,
+0.053)
+------------------------------------------------------------------------------------------------------------
+Length.of.Stay 
+       n  missing distinct 
+   57129        0      120 
+
+lowest : 1   10  100 101 102, highest: 95  96  97  98  99  
+------------------------------------------------------------------------------------------------------------
+Admit.Day.of.Week 
+       n  missing distinct 
+   57129        0        7 
+
+lowest : FRI MON SAT SUN THU, highest: SAT SUN THU TUE WED 
+
+FRI (9230, 0.162), MON (8520, 0.149), SAT (5910, 0.103), SUN (4982, 0.087), THU (9363, 0.164), TUE (9472,
+0.166), WED (9652, 0.169)
+------------------------------------------------------------------------------------------------------------
+Type.of.Admission 
+       n  missing distinct 
+   57129        0        6 
+
+lowest : Elective      Emergency     Newborn       Not Available Trauma       
+highest: Emergency     Newborn       Not Available Trauma        Urgent        
+
+Elective (1885, 0.033), Emergency (52072, 0.911), Newborn (14, 0.000), Not Available (34, 0.001), Trauma
+(1, 0.000), Urgent (3123, 0.055)
+------------------------------------------------------------------------------------------------------------
+Patient.Disposition 
+       n  missing distinct 
+   57129        0       17 
+
+lowest : Another Type Not Listed               Cancer Center or Children's Hospital  Court/Law Enforcement                 Expired                               Facility w/ Custodial/Supportive Care
+highest: Medicaid Cert Nursing Facility        Medicare Cert Long Term Care Hospital Psychiatric Hospital or Unit of Hosp  Short-term Hospital                   Skilled Nursing Home                  
+                                                                                      
+Value                    Another Type Not Listed  Cancer Center or Children's Hospital
+Frequency                                   1028                                    60
+Proportion                                 0.018                                 0.001
+                                                                                      
+Value                      Court/Law Enforcement                               Expired
+Frequency                                     29                                     9
+Proportion                                 0.001                                 0.000
+                                                                                      
+Value      Facility w/ Custodial/Supportive Care          Federal Health Care Facility
+Frequency                                    448                                     8
+Proportion                                 0.008                                 0.000
+                                                                                      
+Value                          Home or Self Care          Home w/ Home Health Services
+Frequency                                  49518                                  1052
+Proportion                                 0.867                                 0.018
+                                                                                      
+Value                             Hospice - Home            Hospice - Medical Facility
+Frequency                                     67                                    45
+Proportion                                 0.001                                 0.001
+                                                                                      
+Value          Inpatient Rehabilitation Facility           Left Against Medical Advice
+Frequency                                    526                                   175
+Proportion                                 0.009                                 0.003
+                                                                                      
+Value             Medicaid Cert Nursing Facility Medicare Cert Long Term Care Hospital
+Frequency                                      3                                    25
+Proportion                                 0.000                                 0.000
+                                                                                      
+Value       Psychiatric Hospital or Unit of Hosp                   Short-term Hospital
+Frequency                                   1253                                  1531
+Proportion                                 0.022                                 0.027
+                                                
+Value                       Skilled Nursing Home
+Frequency                                   1352
+Proportion                                 0.024
+------------------------------------------------------------------------------------------------------------
+Discharge.Year 
+       n  missing distinct     Info     Mean      Gmd 
+   57129        0        1        0     2014        0 
+
+2014 (57129, 1)
+------------------------------------------------------------------------------------------------------------
+Discharge.Day.of.Week 
+       n  missing distinct 
+   57129        0        7 
+
+lowest : FRI MON SAT SUN THU, highest: SAT SUN THU TUE WED 
+
+FRI (11578, 0.203), MON (9525, 0.167), SAT (1316, 0.023), SUN (1257, 0.022), THU (11079, 0.194), TUE
+(11118, 0.195), WED (11256, 0.197)
+------------------------------------------------------------------------------------------------------------
+CCS.Diagnosis.Code 
+       n  missing distinct     Info     Mean      Gmd      .05      .10      .25      .50      .75      .90 
+   57129        0       24    0.825    640.4     35.1      650      656      657      657      659      659 
+     .95 
+     659 
+
+lowest :  52  95 179 181 183, highest: 659 661 662 663 670 
+------------------------------------------------------------------------------------------------------------
+CCS.Diagnosis.Description 
+       n  missing distinct 
+   57129        0       24 
+
+lowest : ADJUSTMENT DISORDERS    ANXIETY DISORDERS       BEHAVIOR DISORDERS      CHILDHOOD DISORDERS     DEVELOPMENTAL DISORDERS
+highest: SCHIZ/OTH PSYCH DISORDR SCREEN/HIST MH/SA CODES SUBSTANCE-RLTD DISORDER SUICIDE/SELF-INFLCT INJ UNCLASSIFIED            
+------------------------------------------------------------------------------------------------------------
+CCS.Procedure.Code 
+       n  missing distinct     Info     Mean      Gmd      .05      .10      .25      .50      .75      .90 
+   57129        0      118    0.598    171.7    73.78        0        0      218      218      218      218 
+     .95 
+     218 
+
+lowest :   0   1   4   5   7, highest: 226 227 228 229 231 
+------------------------------------------------------------------------------------------------------------
+CCS.Procedure.Description 
+       n  missing distinct 
+   57129        0      118 
+
+lowest : ABDOMINAL PARACENTESIS  ALCO/DRUG REHAB/DETOX   AMPUTATE LOWER EXTRMITY ARTERIO/VENOGRAM-NOT HH ARTERIOVENOUS FISTULA  
+highest: TRTMNT,FACE FRACT/DISLC TRTMNT,FRAC LOWR EXTREM TRTMNT,FRAC RADIUS/ULNA UP GASTRO ENDOSC/BIOPSY URETERAL CATHETERIZATN  
+------------------------------------------------------------------------------------------------------------
+APR.DRG.Code 
+       n  missing distinct     Info     Mean      Gmd      .05      .10      .25      .50      .75      .90 
+   57129        0       12     0.92    744.5    15.63      750      750      750      751      753      754 
+     .95 
+     755 
+
+lowest : 561 740 750 751 752, highest: 755 756 758 759 760 
+                                                                                  
+Value        561   740   750   751   752   753   754   755   756   758   759   760
+Frequency   2139    79 21826 12044   301 13896  3078  1059   995  1282    72   358
+Proportion 0.037 0.001 0.382 0.211 0.005 0.243 0.054 0.019 0.017 0.022 0.001 0.006
+------------------------------------------------------------------------------------------------------------
+APR.DRG.Description 
+       n  missing distinct 
+   57129        0       12 
+
+lowest : ACUTE ANXIETY & DELIRIUM STATES                             ADJUSTMENT DISORDERS & NEUROSES EXCEPT DEPRESSIVE DIAGNOSES BIPOLAR DISORDERS                                           CHILDHOOD BEHAVIORAL DISORDERS                              DEPRESSION EXCEPT MAJOR DEPRESSIVE DISORDER                
+highest: MAJOR DEPRESSIVE DISORDERS & OTHER/UNSPECIFIED PSYCHOSES    MENTAL ILLNESS DIAGNOSIS W O.R. PROCEDURE                   OTHER MENTAL HEALTH DISORDERS                               POSTPARTUM & POST ABORTION DIAGNOSES W/O PROCEDURE          SCHIZOPHRENIA                                               
+                                                                      
+Value                                  ACUTE ANXIETY & DELIRIUM STATES
+Frequency                                             995             
+Proportion                                          0.017             
+                                                                      
+Value      ADJUSTMENT DISORDERS & NEUROSES EXCEPT DEPRESSIVE DIAGNOSES
+Frequency                                            1059             
+Proportion                                          0.019             
+                                                                      
+Value                                                BIPOLAR DISORDERS
+Frequency                                           13896             
+Proportion                                          0.243             
+                                                                      
+Value                                   CHILDHOOD BEHAVIORAL DISORDERS
+Frequency                                            1282             
+Proportion                                          0.022             
+                                                                      
+Value                      DEPRESSION EXCEPT MAJOR DEPRESSIVE DISORDER
+Frequency                                            3078             
+Proportion                                          0.054             
+                                                                      
+Value                       DISORDERS OF PERSONALITY & IMPULSE CONTROL
+Frequency                                             301             
+Proportion                                          0.005             
+                                                                      
+Value                                                 EATING DISORDERS
+Frequency                                              72             
+Proportion                                          0.001             
+                                                                      
+Value         MAJOR DEPRESSIVE DISORDERS & OTHER/UNSPECIFIED PSYCHOSES
+Frequency                                           12044             
+Proportion                                          0.211             
+                                                                      
+Value                        MENTAL ILLNESS DIAGNOSIS W O.R. PROCEDURE
+Frequency                                              79             
+Proportion                                          0.001             
+                                                                      
+Value                                    OTHER MENTAL HEALTH DISORDERS
+Frequency                                             358             
+Proportion                                          0.006             
+                                                                      
+Value               POSTPARTUM & POST ABORTION DIAGNOSES W/O PROCEDURE
+Frequency                                            2139             
+Proportion                                          0.037             
+                                                                      
+Value                                                    SCHIZOPHRENIA
+Frequency                                           21826             
+Proportion                                          0.382             
+------------------------------------------------------------------------------------------------------------
+APR.MDC.Code 
+       n  missing distinct     Info     Mean      Gmd 
+   57129        0        2    0.108    18.81   0.3604 
+
+14 (2139, 0.037), 19 (54990, 0.963)
+------------------------------------------------------------------------------------------------------------
+APR.MDC.Description 
+       n  missing distinct 
+   57129        0        2 
+
+Mental Diseases and Disorders (54990, 0.963), Pregnancy, Childbirth and the Puerperium (2139, 0.037)
+------------------------------------------------------------------------------------------------------------
+APR.Severity.of.Illness.Code 
+       n  missing distinct     Info     Mean      Gmd 
+   57129        0        4    0.733     1.75   0.5697 
+
+1 (18353, 0.321), 2 (35199, 0.616), 3 (3110, 0.054), 4 (467, 0.008)
+------------------------------------------------------------------------------------------------------------
+APR.Severity.of.Illness.Description 
+       n  missing distinct 
+   57129        0        4 
+
+Extreme (467, 0.008), Major (3110, 0.054), Minor (18353, 0.321), Moderate (35199, 0.616)
+------------------------------------------------------------------------------------------------------------
+APR.Risk.of.Mortality 
+       n  missing distinct 
+   57129        0        4 
+
+Extreme (50, 0.001), Major (501, 0.009), Minor (52397, 0.917), Moderate (4181, 0.073)
+------------------------------------------------------------------------------------------------------------
+APR.Medical.Surgical.Description 
+       n  missing distinct 
+   57129        0        2 
+
+Medical (57050, 0.999), Surgical (79, 0.001)
+------------------------------------------------------------------------------------------------------------
+Payment.Typology.1 
+       n  missing distinct 
+   57129        0       10 
+
+lowest : Blue Cross/Blue Shield    Department of Corrections Federal/State/Local/VA    Managed Care, Unspecified Medicaid                 
+highest: Medicare                  Miscellaneous/Other       Private Health Insurance  Self-Pay                  Unknown                   
+                                                                                        
+Value         Blue Cross/Blue Shield Department of Corrections    Federal/State/Local/VA
+Frequency                       1988                      1055                        75
+Proportion                     0.035                     0.018                     0.001
+                                                                                        
+Value      Managed Care, Unspecified                  Medicaid                  Medicare
+Frequency                         27                     32550                     12010
+Proportion                     0.000                     0.570                     0.210
+                                                                                        
+Value            Miscellaneous/Other  Private Health Insurance                  Self-Pay
+Frequency                         28                      6535                      2472
+Proportion                     0.000                     0.114                     0.043
+                                    
+Value                        Unknown
+Frequency                        389
+Proportion                     0.007
+------------------------------------------------------------------------------------------------------------
+Payment.Typology.2 
+       n  missing distinct 
+   57129        0       11 
+
+lowest :                           Blue Cross/Blue Shield    Department of Corrections Federal/State/Local/VA    Managed Care, Unspecified
+highest: Medicare                  Miscellaneous/Other       Private Health Insurance  Self-Pay                  Unknown                   
+                                                                                        
+Value                                   Blue Cross/Blue Shield Department of Corrections
+Frequency                      23497                       407                         1
+Proportion                     0.411                     0.007                     0.000
+                                                                                        
+Value         Federal/State/Local/VA Managed Care, Unspecified                  Medicaid
+Frequency                         24                         3                     16859
+Proportion                     0.000                     0.000                     0.295
+                                                                                        
+Value                       Medicare       Miscellaneous/Other  Private Health Insurance
+Frequency                       4806                        59                       838
+Proportion                     0.084                     0.001                     0.015
+                                                              
+Value                       Self-Pay                   Unknown
+Frequency                       9737                       898
+Proportion                     0.170                     0.016
+------------------------------------------------------------------------------------------------------------
+Payment.Typology.3 
+       n  missing distinct 
+   57129        0       10 
+
+lowest :                           Blue Cross/Blue Shield    Department of Corrections Federal/State/Local/VA    Medicaid                 
+highest: Medicare                  Miscellaneous/Other       Private Health Insurance  Self-Pay                  Unknown                   
+                                                                                        
+Value                                   Blue Cross/Blue Shield Department of Corrections
+Frequency                      44311                        76                         1
+Proportion                     0.776                     0.001                     0.000
+                                                                                        
+Value         Federal/State/Local/VA                  Medicaid                  Medicare
+Frequency                          7                      3759                       128
+Proportion                     0.000                     0.066                     0.002
+                                                                                        
+Value            Miscellaneous/Other  Private Health Insurance                  Self-Pay
+Frequency                          3                       139                      7219
+Proportion                     0.000                     0.002                     0.126
+                                    
+Value                        Unknown
+Frequency                       1486
+Proportion                     0.026
+------------------------------------------------------------------------------------------------------------
+Attending.Provider.License.Number 
+       n  missing distinct     Info     Mean      Gmd      .05      .10      .25      .50      .75      .90 
+   57129        0     2508        1  7209062 12917949   141009   163361   196894   234212   260085   272908 
+     .95 
+90193461 
+
+lowest :     2651     3068     3779     3966     4034, highest: 90273660 90273765 90273912 90274929 90275505 
+
+0 (52098, 0.912), 1e+07 (1, 0.000), 3e+07 (1, 0.000), 4e+07 (948, 0.017), 5e+07 (16, 0.000), 6e+07 (165,
+0.003), 6.1e+07 (3, 0.000), 9e+07 (3897, 0.068)
+------------------------------------------------------------------------------------------------------------
+Operating.Provider.License.Number 
+       n  missing distinct     Info     Mean      Gmd      .05      .10      .25      .50      .75      .90 
+   45405    11724     2291        1  4684363  8507745   138957   159932   194319   233056   256589   269702 
+     .95 
+40003776 
+
+lowest :     2651     3779     3947     4034     4066, highest: 90273660 90273765 90273904 90273912 90274929 
+
+0 (42564, 0.937), 1e+07 (9, 0.000), 2e+07 (26, 0.001), 3e+07 (1, 0.000), 4e+07 (900, 0.020), 5e+07 (15,
+0.000), 6e+07 (145, 0.003), 6.1e+07 (3, 0.000), 9e+07 (1742, 0.038)
+------------------------------------------------------------------------------------------------------------
+Other.Provider.License.Number 
+       n  missing distinct     Info     Mean      Gmd      .05      .10      .25      .50      .75      .90 
+    1068    56061       65     0.98  8657130 15323357   157311   209186   215756   243031   257991   263959 
+     .95 
+90271262 
+
+lowest :     3779     4034    46293   112031   144039, highest: 90273337 90273912 90274238 90274929 90277139 
+------------------------------------------------------------------------------------------------------------
+Birth.Weight 
+       n  missing distinct     Info     Mean      Gmd 
+   57129        0        2        0  0.05951    0.119 
+
+0 (57128, 1), 3400 (1, 0)
+------------------------------------------------------------------------------------------------------------
+Abortion.Edit.Indicator 
+       n  missing distinct    value 
+   57129        0        1        N 
+
+N (57129, 1)
+------------------------------------------------------------------------------------------------------------
+Emergency.Department.Indicator 
+       n  missing distinct 
+   57129        0        2 
+
+N (13293, 0.233), Y (43836, 0.767)
+------------------------------------------------------------------------------------------------------------
+Total.Charges 
+       n  missing distinct     Info     Mean      Gmd      .05      .10      .25      .50      .75      .90 
+   57129        0    53972        1    41552    45899     4371     6696    12594    22912    44538    85910 
+     .95 
+  131324 
+
+lowest :    1303.00    1369.00    1400.00    1401.00    1407.58
+highest: 1738914.07 1762104.50 1763559.74 1896380.00 1908149.65 
+------------------------------------------------------------------------------------------------------------
+Total.Costs 
+       n  missing distinct     Info     Mean      Gmd      .05      .10      .25      .50      .75      .90 
+   57129        0    54309        1    19898    20024     2531     3642     7111    12796    22161    39665 
+     .95 
+   58332 
+
+lowest :     636.20     639.93     652.79     654.03     658.57
+highest:  672704.87  722769.09  780030.44  837389.45 1356520.28 
+------------------------------------------------------------------------------------------------------------
