@@ -1,0 +1,1027 @@
+---
+title: "New York City Mental Health Profile 2009-2014"
+author: "Penny"
+output: html_document
+---
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+```
+
+```{r packages}
+# Load all of the packages 
+library(ggplot2)
+library(reshape)
+library(reshape2)
+library(plyr)
+library(dplyr)
+library(gridExtra)
+library(taRifx)
+library(gdata)
+library(ggmap)
+library(rgdal)
+library(rgeos)
+library(maptools)
+library(tidyr)
+#library(tmap)
+library(htmlwidgets)
+library(leaflet)
+library(scales)
+library(Hmisc)
+library(stats)
+```
+
+### Introduction
+
+Mental illness is one of the leading causes of disability in the world. In a report evaluating US Health from 1990-2010, the disease burden of mental illness is among the highest of all diseases [1]. Disease burden refers to the impact of a health problem measured by financial cost, mortality, morbidity, and other factors. Most patients with serious mental diseases or disorders spend years struggling without the ability to live a normal life. It is a big burden both for the patients, the family and our society.
+
+New York City is facing the same problem with high rate of mental illness. Different studies have indicated possible relationship between urban life and higher risk of mental illness. In 2015, New York City launched an action plan called “thriveNYC”[2], aiming to change the way people think about mental health and provide more accessible services citywide. 
+
+The goals of my project here are:    
+
+1. To gain insights of the mental health situation in NYC;  
+
+2. To discover potentially effective interventions and provide guidance for the distribution of fundings and services of NYC to finally improve new yorkers' mental health. 
+
+The data I am using is from Health Data NY, Statewide Planning and Research Cooperative System (SPARCS)[3]. The raw data includes the NY hospitalization inpatient discharges for all diseases from 2009-2014. 
+
+
+
+This file has 3 sections.
+
+Section 1: Explore the 2014 dataset and discovery interesting patterns.
+
+Section 2: Explore the combined dataset from 2009-2014; Analyze the econimic burdens caused by mental diseases in NYC.
+
+Section 3: Three Final plots.
+
+
+References:    
+[1] US Burden of Disease Collaborators. The state of US health, 1990-2010: burden of diseases, injuries, and risk factors. JAMA, 310(6): 591-608, 2013.     
+[2] https://thrivenyc.cityofnewyork.us/      
+[3] https://health.data.ny.gov/Health/Hospital-Inpatient-Discharges-SPARCS-De-Identified/mpue-vn67   
+------------------------------------------
+
+### Section 1: Explore the 2014 dataset and discovery interesting patterns.
+
+#### 1.1 Dataset Exploration
+* The 6 datasets are organized by year in similar format, I am going to explore 2014 raw data first.
+* Load the dataset of patients information with all disease hospitalization in NY 2014.
+
+```{r echo=TRUE}
+df14 <- 
+    read.csv("./Data/Hospital_Inpatient_Discharges__SPARCS_De-Identified___2014.csv")
+```
+
+* Subset data to find those with Mental Diseases & Disorders in NYC
+    1. Subset data with patients from NYC
+    2. Subset data with patients of mental diseases and disorders
+    
+    
+    Based on the diagnosis of mental diseases and disorders, DRG code is used to extract mental diseases and disorders hospilization in the dataset. Neurological diseases and Drug & Alcohol abuses are excluded from the dataset. 
+    
+    Details of DRG code used are listed here: https://github.com/super-penguin/SPARCS-health-data.
+
+
+```{r, echo=TRUE}
+# Subset the Data
+# Subset the inpatient hospilization for Mental Diseases & Disorders of NYC in 2014
+# The subset is based on DRG code
+Mental.Code<- c(740, 750, 751, 752, 753, 754, 755, 756, 758, 759, 760, 561, 766)
+County <- c("Bronx","Kings", "Manhattan", "Queens", "Richmond")
+df14.NYC <- subset(df14, Hospital.County %in% County)
+df14.mental<- subset(df14.NYC, APR.DRG.Code %in% Mental.Code)
+```
+
+
+
+####  1.2 Compare the top10 diseases in NYC 2014
+#### 1.2.1 Plot top 10 diseases with highest hospitalization in NYC
+
+* Remove the hospitalization data of Newborn, Naginal delivery and Cesarean delivery.
+    + Those 3 are not caused by diseases.
+    
+```{r echo=TRUE}
+# Convert the cost and charge ($) into integer for further exploration
+df14.NYC$Total.Charges<- destring(df14.NYC$Total.Charges)
+df14.NYC$Total.Costs<- destring(df14.NYC$Total.Costs)
+df14.mental$Total.Charges<- destring(df14.mental$Total.Charges)
+df14.mental$Total.Costs<- destring(df14.mental$Total.Costs)
+
+# Group dataset by DRG code and sum patients number for each disease 
+df14.NYC.DRG.Group<- df14.NYC %>%
+    group_by(APR.DRG.Code, APR.DRG.Description) %>%
+    summarise(Total.Patients.Number = n()) %>%
+    arrange(Total.Patients.Number)
+```
+
+* Bar Plot of the Top 10 Diseases in NYC 2014
+
+
+```{r, fig.width=8, fig.height=8}
+
+# Remove the hospilization data of Newborn, Naginal delivery and Cesarean delivery
+# Those 4 are not caused by desease
+new_df<- tail(df14.NYC.DRG.Group, 13)
+new_df<- new_df[order(new_df$Total.Patients.Number, decreasing = TRUE), ]
+new_df<- new_df[c(4:13),]
+
+ggplot(new_df, aes(x = reorder(APR.DRG.Description, Total.Patients.Number), 
+                   y =Total.Patients.Number)) +
+    geom_bar(stat="identity") + 
+    coord_flip() + 
+    ggtitle("Top 10 diseases in NYC 2014") +
+    labs (y = "Number of Patients") +
+    theme(axis.title.y=element_blank())
+```
+
+
+In this figure, Schizophrenia and Bipolar Disorders are both belong to mental disorders. Among the top 10 diseases, two of them are mental disorders and Schizophrenia is the third most common one. It indicates the importance of understanding mental health situation in NYC.
+
+
+#### 1.2.2 Plot the Number of Patients with Different Mental Diseases & Disorders by DRG Code
+
+```{r, fig.width=8, fig.height= 8}
+
+df14.mental.new <- df14.mental %>%
+    group_by(APR.DRG.Description) %>%
+    summarise(Total.Patients.Number = n()) 
+    
+
+ggplot(df14.mental.new, 
+       aes(x = reorder(APR.DRG.Description, Total.Patients.Number), 
+           y = Total.Patients.Number)) +
+    geom_bar(stat="identity") + 
+    coord_flip() +
+    ggtitle("Mental Diseases in NYC 2014") +
+    labs (y = "Number of Patients") +
+    theme(axis.title.y=element_blank())
+```
+
+Schizophrenia, Bipolar Disorders and Major Depressive Disorders are the TOP 3 most common mental illnesses in NYC 2014.
+
+#### 1.2.3 Plot the Fraction of Patients Admitted Through Emergency Department for the Top 10 Diseases in NYC 2014
+
+
+```{r, fig.width=8, fig.height= 8}
+df14.top10<- subset(df14, APR.DRG.Code %in% new_df$APR.DRG.Code)
+
+df14.top10.Emergency <- df14.top10 %>%
+    group_by(APR.DRG.Description, APR.DRG.Code, Emergency.Department.Indicator) %>%
+    summarise(Total.Patients.Number = n()) %>%
+    arrange(Total.Patients.Number)
+
+df14.Emergency<- dcast(df14.top10.Emergency, APR.DRG.Code ~ Emergency.Department.Indicator, value.var="Total.Patients.Number")
+
+df14.Emergency$EM_fraction <- (df14.Emergency$Y) / (df14.Emergency$N + df14.Emergency$Y)
+
+new_df<- left_join(new_df, df14.Emergency, by = "APR.DRG.Code")
+
+ggplot(new_df, aes(x = reorder(APR.DRG.Description, Total.Patients.Number), y = 100*EM_fraction)) +
+    geom_bar(stat="identity") + 
+    coord_flip() + 
+    ggtitle("Percentage of Emergency Admission - Top 10 Diseases in NYC 2014") +
+    labs (y = "Percentage of Emergency Admission (%)") +
+    theme(axis.title.y=element_blank())
+```
+
+By comparing the emergent addmission rate of top 10 diseases in NYC, Schizophrenia and Bipolar Disorders are not the highest, but they all lie in the higher range (around 70%).
+
+Emergency admission rate of mental diseases & disorders implies the importance of early action on the road to improve mental health. Improving early counseling services and early responding team might be an effective way to provide patients with necessary help and prevent it from getting worse.
+
+
+#### 1.2.4 Compare and Plot the Total Charges of the Top 10 Diseases in NYC 2014
+
+```{r}
+df14.charges <- subset(df14.NYC, APR.DRG.Code %in% new_df$APR.DRG.Code)
+
+ggplot(data = df14.charges, aes(x = APR.DRG.Description, y = as.numeric(Total.Charges))) +
+    geom_boxplot(outlier.colour = NA) +
+    coord_flip(ylim = c(0,100000)) +
+    ggtitle("Total Charges of the Top 10 Diseases") +
+    labs(y = "Total Charges($)") +
+    theme(axis.title.y=element_blank())
+```   
+
+The averaged total charge of Schizophrenia is the third highest among the top 10 diseases. It is a huge financial burden both to the patients' family and our city.
+
+
+#### 1.2.5 Comapre the total charges and costs (log scale) distribution of all the diseases vs. mental diseases in NYC
+```{r}
+
+p1<- ggplot(data = df14.NYC, aes(x = as.numeric(Total.Charges))) +
+    scale_x_log10() + 
+    geom_histogram(fill = "red", alpha = 0.2, bins = 200) +
+    ggtitle("Total Charge and Cost Distrbution\nof All Diseases in NYC 2014") +
+    coord_cartesian(xlim = c(100,10000000)) +
+    labs(x = "Total Charges(log10$)")
+
+p2<- ggplot(data = df14.mental,  aes(x = as.numeric(Total.Charges))) + 
+    scale_x_log10() + 
+    geom_histogram(fill = "blue", alpha = 0.2, bins = 200) +
+    ggtitle("Total Charge and Cost Distrbution \nof Mental Diseases in NYC 2014") +
+    coord_cartesian(xlim = c(100,10000000)) +
+    labs(x = "Total Charges(log10$)")
+
+p3<- ggplot(data = df14.NYC, aes(x = as.numeric(Total.Costs))) + 
+    scale_x_log10() + 
+    geom_histogram(fill = "red", alpha = 0.2, bins = 200) +
+    coord_cartesian(xlim = c(100,10000000)) +
+    labs(x = "Total Costs(log10$)")
+    
+    
+p4<- ggplot(data = df14.mental, aes(x = as.numeric(Total.Costs))) +
+    scale_x_log10() + 
+    geom_histogram(fill = "blue", alpha = 0.2, bins = 200) +
+    coord_cartesian(xlim = c(100,10000000)) +
+    labs(x = "Total Costs(log10$)")
+    
+grid.arrange(p1, p2, p3, p4, ncol = 2)
+``` 
+
+There is not much difference between the distribution of total changes and costs in all other disceases compared with mental diseases.
+
+#### 1.2.6 Comapre the hospitalization stay length distribution of all the diseases vs. mental diseases in NYC
+
+```{r}
+p1<- ggplot(df14.NYC, aes(x = as.numeric(Length.of.Stay))) + 
+    geom_histogram(data = df14.NYC, fill = "red", alpha = 0.2, binwidth = 7) +
+    ggtitle("Distribution of Hospitalization Length \nfor all diseases in NYC 2014") +
+    labs (x = "Length of Hospitalization (day)")
+
+p2<- ggplot(df14.NYC, aes(x = as.numeric(Length.of.Stay))) +
+    geom_histogram(data = df14.mental, fill = "blue", alpha = 0.2, binwidth = 7) +
+    ggtitle("Distribution of Hospitalization Length \nfor mental diseases in NYC 2014") +
+    labs (x = "Length of Hospitalization (day)")
+
+grid.arrange(p1, p2, ncol = 2)
+``` 
+
+Compared with the distribution of all disease in NYC, the hospitalization length for mental diseases distribute more toward longer stay. The peak distribution is smimilar with other diseases, but more cases for mental diseases are toward longer period.
+
+####  1.2.7 Compare and Plot the Length of Hospitalization of the Top 10 Diseases in NYC 2014
+
+```{r}
+
+df14.charges <- subset(df14.NYC, APR.DRG.Code %in% new_df$APR.DRG.Code)
+ggplot(data = df14.charges, aes(x = APR.DRG.Description, y = as.numeric(Length.of.Stay))) +
+    geom_boxplot() +
+    coord_flip() +
+    ggtitle("Length of Hospitalization of the Top 10 Diseases in NYC 2014") +
+    labs(y = "Length of Hospitalization (day)") +
+    theme(axis.title.y=element_blank())
+```   
+
+The hospitalization length of Schizophrenia and Biopolar Disorders are both in the higher range. Actually, this figure might not represent the actual long term burden of mental diseases. In fact, most patients still need extra care at home or specific facilities after discharging from the hospital. 
+
+####  1.2.8 Observations and Reflections
+
+In this chapter, the severity of mental disorders are compared with the top 10 diseases in NYC on different aspects. In 2014, schizophrenia alone was already the thrid leading cause of patient hospitalization in NYC. Besides the shocking number of patients with mental problems, the high charges and long hospitalization duration are heavy burden both to the patients and our city. Most patients with severe mental disorders lose the ability to work and live by themselves for years or even a lifetime. Extra care and cost is needed constantly.
+
+From those figures, it is clear that mental health is one of the urgent problems to our city and effective data sharing should be coordinated to come up with new strategies. We are going to focus on exploring hospitalization data of mental diseases in NYC 2014 for the next part.
+
+
+
+####  1.3. Discover the vulnerable groups in NYC who are more likely to suffer from mental problems
+####  1.3.1 Bar Plot of Patients with different age and racial groups  
+
+* Group patients data by age, gender and race
+
+```{r echo=TRUE}
+df14.fc_by_age_race <- df14.mental %>%
+    filter(Race != "Multi-racial") %>%
+    group_by(Age.Group, Race, Gender) %>%
+    summarise(mean_days = mean(as.numeric(Length.of.Stay)),
+              mean_costs = mean(as.numeric(Total.Costs)),
+              n = n()) %>%
+    arrange(Age.Group)
+```
+
+* Data Visualization - The difference of patient number by age and racial groups
+
+```{r}
+ggplot(data = df14.fc_by_age_race, aes(Age.Group, n, fill = Race)) + 
+    geom_bar(position = "dodge", stat = "identity") + 
+    ggtitle("NYC Mental Health 2014 - Age & Race") +
+    labs(x="Age Group", y="Patient Number")
+```
+
+* Data Visualization - The difference of patients number by age and gender groups
+
+```{r}
+ggplot(data = df14.fc_by_age_race, aes(Age.Group, n, fill = Gender)) + 
+    geom_bar(position = "dodge", stat = "identity") + 
+    ggtitle("NYC Mental Health 2014 - Age & Gender") +
+    labs(x="Age Group", y="Number of Patients") 
+
+```
+
+There are more patients with mental disease from age 18-69. This trend corresponds to the population age distribution. For the gender difference, male are more likely to suffer from mental diseases.
+
+There seems to have a significant racial difference in patients with mental diseases. Black/African seems more likely to suffer from mental diseases. However, no conclusion can be drawn without normalizing the patient number to different racial population.
+
+####  1.3.2 Normalizing Patients Number with the Corresponding Racial Population
+
+* The Estimated Population of NYC in 2014: 
+    + Total Population: 8405837 
+    + White: 33% - 2773926
+    + Black/African American: 23% - 1933342
+    + Other Race: 44% - 3698568
+
+```{r}
+# Create a new Population Dataframe
+Population<- data.frame(Race = as.character(c("White","Black/African American","Other Race")), 
+                        race.population = c(2773926, 1933342, 3698568))
+# Group data by race
+df14.fc_by_race <- df14.fc_by_age_race %>%
+    group_by(Race) %>%
+    summarise(Total.Patients = sum(n))
+
+df14.fc_by_race<- left_join(df14.fc_by_race, Population)
+df14.fc_by_race$Percentage <- df14.fc_by_race$Total.Patients/df14.fc_by_race$race.population
+
+ggplot(data = df14.fc_by_race, aes(Race, Percentage*100, fill=Race)) + 
+    geom_bar(stat = "identity") + 
+    ggtitle("NYC Mental Health - Racial Difference") +
+    labs(y="Percentage to Corresponding Population (%)") +
+    theme(legend.position='none', axis.title.x=element_blank())
+```
+
+
+#### Conclusion
+
+**There is a significant racial difference for mental diseases and disorders hospitalization in NYC. The percentage of Black/African American with mental problems is almost two times compared with other races. Statistical analysis will be performed for all the data from 2009-2014 on racial difference in Section 2.**
+
+####  1.3.3. Other bivariate and multivariate plots to explore the data set.
+
+* Group patients data by age and mental diseases type
+
+```{r echo=TRUE}
+df14.fc_by_age_disease <- df14.mental %>%
+    group_by(Age.Group, APR.DRG.Description) %>%
+    summarise(mean_days = mean(as.numeric(Length.of.Stay)),
+              mean_costs = mean(as.numeric(Total.Costs)),
+              sum_costs = sum(as.numeric(Total.Costs)),
+              n = n()) %>%
+    arrange(Age.Group)
+```
+
+* Data Visualization -  The difference of patient number by disease type and age groups 
+
+```{r}
+ggplot(data = df14.fc_by_age_disease, aes(APR.DRG.Description, n, fill = Age.Group)) + 
+    geom_bar(position = "dodge", stat = "identity") + 
+    ggtitle("Menal Diseases Type vs. Age Group") +
+    labs(y="Number of Patients") +
+    theme(axis.text.x = element_text(angle = 60, size = 5, hjust = 1),
+          axis.title.x=element_blank())
+```
+
+* Explore the economic burden by different mental diseases and age groups - Heat Map 
+
+```{r}
+ggplot(data = df14.fc_by_age_disease, aes(APR.DRG.Description, Age.Group, fill = sum_costs)) + 
+    geom_raster()+
+    ggtitle("Economic Burden - Menal Diseases Type vs. Age Group") +
+    theme(axis.text.x = element_text(angle = 60, size = 5, hjust = 1),
+          axis.title.x=element_blank())+
+    scale_fill_continuous(guide = guide_legend(title = "Cumulative \nTotal Costs"))
+
+```
+
+* Group patients data by race and mental diseases type 
+
+```{r echo=TRUE}
+df14.fc_by_race_disease <- df14.mental %>%
+    group_by(Race, APR.DRG.Description) %>%
+    filter(Race != "Multi-racial") %>%
+    summarise(mean_days = mean(as.numeric(Length.of.Stay)),
+              mean_costs = mean(as.numeric(Total.Costs)),
+              sum_costs = sum(as.numeric(Total.Costs)),
+              n = n()) %>%
+    arrange(Race)
+```
+
+* Data Visualization - The difference of patients number by race and mental disease type
+
+```{r}
+ggplot(data = df14.fc_by_race_disease, aes(APR.DRG.Description, n, fill = Race)) + 
+    geom_bar(position = "dodge", stat = "identity") + 
+    ggtitle("Menal Diseases Type vs. Race") +
+    labs(y="Number of Patients") +
+    theme(axis.text.x = element_text(angle = 60, size = 5, hjust = 1),
+          axis.title.x=element_blank())
+```
+
+
+* Explore the economic burden by different mental diseases and races - Heat Map 
+
+```{r}
+ggplot(data = df14.fc_by_race_disease, aes(APR.DRG.Description, Race, fill = sum_costs)) + 
+    geom_raster()+
+    ggtitle("Economic Burden - Menal Diseases Type vs. Race") +
+    theme(axis.text.x = element_text(angle = 60, size = 5, hjust = 1),
+          axis.title.x=element_blank(), axis.title.y=element_blank()) +
+    scale_fill_continuous(guide = guide_legend(title = "Cumulative \nTotal Costs"))
+
+```
+
+* Explore the economic burden by different age and racial groups - Heat Map 
+
+```{r}
+df14.fc_by_race_age <- df14.mental %>%
+    group_by(Race, Age.Group) %>%
+    filter(Race != "Multi-racial") %>%
+    summarise(mean_days = mean(as.numeric(Length.of.Stay)),
+              mean_costs = mean(as.numeric(Total.Costs)),
+              sum_costs = sum(as.numeric(Total.Costs)),
+              n = n()) %>%
+    arrange(Age.Group)
+
+ggplot(df14.fc_by_race_age, aes(Race, Age.Group, fill = sum_costs)) +
+    geom_raster() + 
+    ggtitle("Economic Burden - Age vs. Race") +
+    theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+    scale_fill_continuous(guide = guide_legend(title = "Cumulative \nTotal Costs"))
+```
+
+All these explorations reveal the high economic burden of Schizophrenia in Black/African American to NYC in 2014. We are going to explore the econimic burdern by geographic region of NYC in Section 2.
+
+
+####  1.4 Explore the temperal patterns of mental health hospitalization in NYC
+
+* Compare the day of hospitalization admission for mental diseases and disorders in NYC
+
+```{r}
+
+df14.mental$Admit.Day.of.Week <- factor(df14.mental$Admit.Day.of.Week, c("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"))
+
+df14.mental.day_of_week<- df14.mental %>%
+    group_by(Admit.Day.of.Week, Emergency.Department.Indicator, APR.Severity.of.Illness.Code) %>%
+    summarise(Mean.Charge = mean(as.numeric(Total.Charges)), 
+              Mean.Cost = mean(as.numeric(Total.Costs)),
+              Total.Patients.Number = n()) %>%
+    arrange(Admit.Day.of.Week)
+
+P_day_EM<- ggplot(aes(x = factor(Admit.Day.of.Week)), data = df14.mental[df14.mental$Emergency.Department.Indicator=="Y",]) + 
+    geom_bar() + 
+    ggtitle("NYC Mental Illness Emergency Admission 2014") +
+    labs(x="Day of Week",y="number of patients") 
+
+P_day_Total<- ggplot(aes(x = Admit.Day.of.Week), data = df14.mental) + 
+    geom_bar() + 
+    ggtitle("NYC Mental Illness Total Hospitalization Admission 2014") +
+    labs(x="Day of Week",y="number of patients") 
+
+grid.arrange(P_day_Total, P_day_EM, ncol = 1)
+```
+
+The plot of hospitalization admission date has an interesting pattern. The number of patients admitted are much higher during weekday compared with weekend. The trend goes up from Monday to Wednesday and down from Wednesday to Friday. Then it drops significantly on Saturday and keeps going lower on Sunday. This Interesting trend matches the working pressure during our daily life. It indicates that mental illness is highly likely to be triggered by work and study pressure in NYC.
+
+
+#### Final Conclusion
+
+**Racial and Gender differences are two important factors in 2014 dataset. After the exporalization, we are going to process and analyze all the datasets from 2009 to 2014. In the next section, we are going to focus on three factors: race, gender and geographic region of NYC.**
+
+------------------------------------------
+
+### Section 2: Explore NYC mental diesease inpatient data from 2009-2014
+
+* The datasets from 2009 to 2014 have been cleaned similarly as "df14.mental", and combined in one data file: NYC2009_2014_inpatient_discharge_mental.csv
+
+* Please see the file "Data_cleaning.R" for data auditing
+* Load data into NYC.mental
+* Save data description into file: "NYC.mental.data_dictionary.txt" with Mean and other informaitons
+
+```{r}
+NYC.mental<- read.csv("NYC2009_2014_inpatient_discharge_mental.csv")
+
+#data_dictionary <- describe(NYC.mental)
+#sink("NYC.mental.data_dictionary.txt", append=TRUE)
+#data_dictionary
+#sink()
+#file.show(file = "NYC.mental.data_dictionary.txt",pager = "internal")
+```
+
+#### 2.1. ANOVA - to assess the importance of Race, Gender and Hospital County factors on NYC mental diseases and its econimic burdens.
+
+```{r}
+NYC.mental$Total.Charges<- destring(NYC.mental$Total.Charges)
+NYC.mental$Total.Costs<- destring(NYC.mental$Total.Costs)
+
+Queens.zip = c("110","111","113","114","116")
+Kings.zip = c("112")
+Manhattan.zip = c("100","101", "102")
+Bronx.zip = c("104")
+Richmond.zip = c("103")
+Unknown = c("OOS")
+Total.zip = c("110","111","113","114","116", "112","100","101", "102", "104", "103", "OOS")
+
+# Replace zip code with county name
+# Remove zip code not in NYC or unknown
+NYC.mental$Zip.Code...3.digits <- as.character(NYC.mental$Zip.Code...3.digits)
+NYC.mental$Zip.Code...3.digits[!(NYC.mental$Zip.Code...3.digits %in% Total.zip)] <- "NonNYC"
+NYC.mental$Zip.Code...3.digits[NYC.mental$Zip.Code...3.digits %in% Unknown] <- "Unknown"
+NYC.mental$Zip.Code...3.digits[NYC.mental$Zip.Code...3.digits  %in% Kings.zip] <- "Kings"
+NYC.mental$Zip.Code...3.digits[NYC.mental$Zip.Code...3.digits %in% Queens.zip] <- "Queens"
+NYC.mental$Zip.Code...3.digits[NYC.mental$Zip.Code...3.digits %in% Manhattan.zip] <- "Manhattan"
+NYC.mental$Zip.Code...3.digits[NYC.mental$Zip.Code...3.digits  %in% Bronx.zip] <- "Bronx"
+NYC.mental$Zip.Code...3.digits[NYC.mental$Zip.Code...3.digits  %in% Richmond.zip] <- "Richmond"
+
+
+NYC.mental$Zip.Code...3.digits <- as.factor(NYC.mental$Zip.Code...3.digits)
+
+NYC.mental<- subset(NYC.mental, Zip.Code...3.digits %in% County)
+
+```
+
+```{r Function for statistical plotting}
+# SummarySE FUNCTION ------------------------------------------------------
+
+## Summarizes data, handling within-subjects variables by removing inter-subject variability.
+## It will still work if there are no within-S variables.
+## Gives count, un-normed mean, normed mean (with same between-group mean),
+##   standard deviation, standard error of the mean, and confidence interval.
+## If there are within-subject variables, calculate adjusted values using method from Morey (2008).
+##   data: a data frame.
+##   measurevar: the name of a column that contains the variable to be summariezed
+##   betweenvars: a vector containing names of columns that are between-subjects variables
+##   withinvars: a vector containing names of columns that are within-subjects variables
+##   idvar: the name of a column that identifies each subject (or matched subjects)
+##   na.rm: a boolean that indicates whether to ignore NA's
+##   conf.interval: the percent range of the confidence interval (default is 95%)
+summarySEwithin <- function(data=NULL, measurevar, betweenvars=NULL, withinvars=NULL,
+                            idvar=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE) {
+
+    # Ensure that the betweenvars and withinvars are factors
+    factorvars <- vapply(data[, c(betweenvars, withinvars), drop=FALSE],
+                         FUN=is.factor, FUN.VALUE=logical(1))
+
+    if (!all(factorvars)) {
+        nonfactorvars <- names(factorvars)[!factorvars]
+        message("Automatically converting the following non-factors to factors: ",
+                paste(nonfactorvars, collapse = ", "))
+        data[nonfactorvars] <- lapply(data[nonfactorvars], factor)
+    }
+
+    # Get the means from the un-normed data
+    datac <- summarySE(data, measurevar, groupvars=c(betweenvars, withinvars),
+                       na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
+
+    # Drop all the unused columns (these will be calculated with normed data)
+    datac$sd <- NULL
+    datac$se <- NULL
+    datac$ci <- NULL
+
+    # Norm each subject's data
+    ndata <- normDataWithin(data, idvar, measurevar, betweenvars, na.rm, .drop=.drop)
+
+    # This is the name of the new column
+    measurevar_n <- paste(measurevar, "_norm", sep="")
+
+    # Collapse the normed data - now we can treat between and within vars the same
+    ndatac <- summarySE(ndata, measurevar_n, groupvars=c(betweenvars, withinvars),
+                        na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
+
+    # Apply correction from Morey (2008) to the standard error and confidence interval
+    #  Get the product of the number of conditions of within-S variables
+    nWithinGroups    <- prod(vapply(ndatac[,withinvars, drop=FALSE], FUN=nlevels,
+                                    FUN.VALUE=numeric(1)))
+    correctionFactor <- sqrt( nWithinGroups / (nWithinGroups-1) )
+
+    # Apply the correction factor
+    ndatac$sd <- ndatac$sd * correctionFactor
+    ndatac$se <- ndatac$se * correctionFactor
+    ndatac$ci <- ndatac$ci * correctionFactor
+
+    # Combine the un-normed means with the normed results
+    merge(datac, ndatac)
+}
+
+
+## Gives count, mean, standard deviation, standard error of the mean, and confidence interval (default 95%).
+##   data: a data frame.
+##   measurevar: the name of a column that contains the variable to be summariezed
+##   groupvars: a vector containing names of columns that contain grouping variables
+##   na.rm: a boolean that indicates whether to ignore NA's
+##   conf.interval: the percent range of the confidence interval (default is 95%)
+summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
+                      conf.interval=.95, .drop=TRUE) {
+    library(plyr)
+
+    # New version of length which can handle NA's: if na.rm==T, don't count them
+    length2 <- function (x, na.rm=FALSE) {
+        if (na.rm) sum(!is.na(x))
+        else       length(x)
+    }
+
+    # This does the summary. For each group's data frame, return a vector with
+    # N, mean, and sd
+    datac <- ddply(data, groupvars, .drop=.drop,
+                   .fun = function(xx, col) {
+                       c(N    = length2(xx[[col]], na.rm=na.rm),
+                         mean = mean   (xx[[col]], na.rm=na.rm),
+                         sd   = sd     (xx[[col]], na.rm=na.rm)
+                       )
+                   },
+                   measurevar
+    )
+
+    # Rename the "mean" column
+    datac <- rename(datac, c("mean" = measurevar))
+
+    datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
+
+    # Confidence interval multiplier for standard error
+    # Calculate t-statistic for confidence interval:
+    # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
+    ciMult <- qt(conf.interval/2 + .5, datac$N-1)
+    datac$ci <- datac$se * ciMult
+
+    return(datac)
+}
+```
+
+
+```{r}
+NYC.mental.new <- NYC.mental %>%
+    filter(Race != "Multi-racial" & Race != "Unknown") %>%
+    group_by(Race, Gender, Hospital.County,
+             APR.Severity.of.Illness.Code, APR.DRG.Code) %>%
+    summarise(mean_charges = mean(as.numeric(Total.Charges)),
+              mean_costs = mean(as.numeric(Total.Costs)),
+              sum_costs = sum(as.numeric(Total.Costs)),
+              Patients.Number = n())
+
+Y<-cbind(NYC.mental.new$mean_charges,NYC.mental.new$sum_costs,
+         NYC.mental.new$Patients.Number)
+
+anova.result1<- aov(Patients.Number ~ Race * Hospital.County * Gender,
+               data = NYC.mental.new)
+
+summary(anova.result1)
+```
+
+Conclusion: There are statistically significant differences between Race and Hospital.County in our dataset. Next, we are going to plot them seperately and perfrom post-hoc analysis.
+
+
+#### 2.2 Plot the relationship of Race, Age Groups and Patient Numbers 
+
+#### 2.2.1 Plot without normalizing to each racial population
+
+```{r}
+# First exploration -------------------------------------------------------
+
+NYC.mental$Discharge.Year<- as.factor(NYC.mental$Discharge.Year)
+
+detach("package:plyr", unload=TRUE) 
+library(dplyr)
+NYC.fc_by_age_race <- NYC.mental %>%
+    filter(Race != "Multi-racial" & Race != "Unknown" ) %>%
+    group_by(Age.Group, Race, Gender, Discharge.Year) %>%
+    summarise(n = n()) %>%
+    arrange(Age.Group)
+
+
+NYC.fc_by_age_race.c<- summarySE(NYC.fc_by_age_race,
+                                 measurevar="n", groupvars=c("Race","Age.Group"))
+
+ggplot(data = NYC.fc_by_age_race.c, aes(Age.Group, n, fill = Race)) +
+    geom_bar(position = "dodge", stat = "identity") +
+    geom_errorbar(aes(ymin=n-ci, ymax = n + ci, col = Race), width=.3,
+                  position=position_dodge(.9)) +
+    labs(x="Age Group", y="Patient Number") +
+    theme(text = element_text(size=12))
+```
+
+#### 2.2.2 Plot with normalizing to each racial population
+
+```{r}
+Population<- data.frame(Race = as.character(c("White","Black/African American",
+                                              "Other Race")),
+                        race.population = c(3597341, 2088510, 2163381))
+
+detach("package:plyr", unload=TRUE) 
+library(dplyr)
+NYC.fc_by_race<- NYC.mental %>%
+    filter(Race != "Multi-racial" & Race != "Unknown" ) %>%
+    group_by(Race, Discharge.Year) %>%
+    summarise(n = n())
+    
+
+NYC.fc_by_race<- left_join(NYC.fc_by_race, Population)
+NYC.fc_by_race$Percentage <-
+    NYC.fc_by_race$n/NYC.fc_by_race$race.population
+
+NYC.fc_by_race.c<- summarySE(NYC.fc_by_race,
+                                 measurevar="Percentage", groupvars=c("Race"))
+
+
+final_f1<- ggplot(data = NYC.fc_by_race.c, aes(Race, Percentage*100, fill=Race)) +
+    geom_bar(stat = "identity") +
+    geom_errorbar(aes(ymin=(Percentage-ci)*100, ymax = (Percentage + ci)*100,
+                      col = Race), width=.3,
+                  position=position_dodge(.9)) +
+    coord_flip() +
+    labs(y="Annual Patient Percentage to Corresponding Race Population (%) \nand 95% Coffidence Intervals") +
+    geom_text(aes(label=round(Percentage*100,2)),
+              vjust=0.5, hjust = 1.5, size = 10) +
+    theme(text = element_text(size=12), 
+          axis.title.y=element_blank(),
+          legend.position='none',
+          plot.margin=unit(c(0.5,2,1,1),"cm")) +
+    ggtitle("Mental Diseases Hospilization Rate \nin Different Racial Groups of NYC 2009-2014")
+
+final_f1
+```
+
+#### 2.2.3 Post-hoc analysis of the factor: Race
+
+```{r ANOVA1}
+result1= aov(Patients.Number ~ Race, data = NYC.mental.new)
+summary(result1)
+TukeyHSD(result1, conf.level = 0.95)
+```
+
+
+#### 2.2.4 Plot without normalizing patients number to each racial population at county level
+
+```{r}
+# Disease level -----------------------------------------------------------
+detach("package:plyr", unload=TRUE) 
+library(dplyr)
+NYC.fc_by_multi <- NYC.mental %>%
+    filter(Race != "Multi-racial" & Race != "Unknown") %>%
+    group_by(Age.Group, Race, Gender, Hospital.County, Discharge.Year) %>%
+    summarise(mean_charges = mean(as.numeric(Total.Charges)),
+              median_charges = median(as.numeric(Total.Charges)),
+              n = n())
+
+ggplot(data = NYC.fc_by_multi, aes(Hospital.County, n, fill = Race)) +
+    geom_bar(position = "dodge", stat = "identity") +
+    ggtitle("NYC Mental Health 2014") +
+    labs(x="Patient County", y="Patient Number")
+
+```
+
+#### 2.2.5 Plot with normalizing patients number to each racial population at county level
+
+```{r}
+NYC.fc_by_race_county <- NYC.fc_by_multi%>%
+    group_by(Race, Hospital.County, Discharge.Year) %>%
+    summarise(Total.Patients = sum(n))
+
+Race = as.character(rep(c("White","Black/African American","Other Race"), 5))
+County.Race = rep(c("Bronx","Kings", "Manhattan", "Queens", "Richmond"),
+                  each = 3)
+
+County.Race.Population = c(386497, 505200, 420168,
+                           1072041, 860083, 496272,
+                           911073, 246687, 364790,
+                           886053, 426683, 817073,
+                           341677, 49857, 65078)
+
+Population.race.county<- data.frame(Race, Hospital.County = County.Race,
+                                    County.Race.Population)
+
+NYC.fc_by_multi_new <- left_join(NYC.fc_by_race_county,
+                                  Population.race.county)
+
+NYC.fc_by_multi_new$Percentage <-
+    NYC.fc_by_multi_new$Total.Patients/
+    NYC.fc_by_multi_new$County.Race.Population
+
+NYC.fc_by_multi.c<- summarySE(NYC.fc_by_multi_new,
+                                    measurevar="Percentage",
+                              groupvars=c("Race","Hospital.County"))
+
+ggplot(data = NYC.fc_by_multi.c,
+       aes(Hospital.County, Percentage*100, fill=Race)) +
+    geom_bar(position = "dodge", stat = "identity") +
+    coord_flip() +
+    geom_errorbar(aes(ymin=(Percentage-ci)*100, ymax = (Percentage+ci)*100,
+                      col = Race), width = .3,
+                  position = position_dodge(.9)) +
+    labs(y="Annual Patient Percentage to Corresponding Race Population (%)
+         and 95% Coffidence Intervals") +
+    geom_text(aes(label=round(Percentage*100,2)),
+              position = position_dodge(.9),
+              vjust=0.5, hjust = 1, size = 5) +
+    theme(text = element_text(size=8), axis.title.y=element_blank(),
+          plot.margin=unit(c(0.5,2,1,1),"cm"))
+
+```
+
+#### 2.2.6 Post-hoc analysis of the factor: Hosptical County
+```{r ANOVA2}
+library(dplyr)
+result2= aov(Total.Patients ~ Hospital.County, data = NYC.fc_by_race_county)
+summary(result2)
+TukeyHSD(result2, conf.level = 0.95)
+```
+
+**Conclusion: There are significant racial and county differences in the utilization of inpatient mental health service in NYC.**
+
+
+#### 2.2.7 Map NYC mental diseases and disorders hospitalization into County Level
+
+* Prepare the map shapefile.
+    + New York City shape files could be downloaded from:       http://www1.nyc.gov/site/planning/data-maps/open-data/districts-download-metadata.page
+
+* Load NYC map at county level.
+
+* Population at county level:
+    + Bronx: 1418733
+    + Brooklyn (Kings): 2592149
+    + Manhattan: 1626159
+    + Queens: 2296175
+    + Staten Island (Richmond): 472621
+
+```{r}
+# MAP ---------------------------------------------------------------------
+NYC.map <- readOGR(dsn = "nybb_16c", layer = "nybb")
+
+# Drop factor levels
+detach("package:plyr", unload=TRUE) 
+library(dplyr)
+NYC.mental.county <- NYC.mental %>%
+    filter(!is.na(Hospital.County)) %>%
+    group_by(Hospital.County) %>%
+    summarise(mean_charges = mean(as.numeric(Total.Charges)),
+              sum_costs = sum(as.numeric(Total.Costs)),
+              n = n()) %>%
+    arrange(Hospital.County)
+
+Population.Profile<- data.frame(County = c("Bronx", "Kings",
+                                           "Manhattan", "Queens", "Richmond"),
+                                Population = c(1385108, 2504700,
+                                               1585873, 2230722, 468730))
+
+NYC.mental.county<- merge(NYC.mental.county, Population.Profile,
+                           by.x = "Hospital.County", by.y = "County")
+
+NYC.mental.county$Hospital.County<- c("Bronx", "Brooklyn", "Manhattan",
+                                       "Queens", "Staten Island")
+
+colnames(NYC.mental.county)[1]<- "BoroName"
+
+NYC.map@data<- left_join(NYC.map@data, NYC.mental.county)
+NYC.map@data$Patient.to.Population <-
+    (NYC.map@data$n / NYC.map@data$Population /6)*10000
+
+```
+
+* MAP1 - Map Patients Number (per 1,000 Population) with Mental Problems
+
+```{r}
+
+NYC.map1 <- spTransform(NYC.map, CRS("+proj=longlat +datum=WGS84"))
+
+mypopup <- paste(sep = "<br/>", NYC.map1@data$BoroName,
+                 "Total Patients Number: ", NYC.map1@data$n,
+                 "Populations: ", NYC.map1@data$Population,
+                 "Patients per 10,000 populations: ",
+                 round(NYC.map1@data$Patient.to.Population, digits = 0),
+                 "Average Charges for Mental Hospilization: ",
+                 round(NYC.map1@data$mean_charges, digits =2),
+                 "Total Cost for Mental Hospilization: ",
+                 round(NYC.map1@data$sum_costs, digits =2))
+
+myPalette1 <- colorNumeric(palette = "Reds",
+                           domain=NYC.map1@data$Total.Patients)
+myPalette2<- colorNumeric(palette = "Reds",
+                          domain=NYC.map1@data$Population)
+myPalette3<- colorNumeric(palette = "Reds",
+                          domain=NYC.map1@data$Patient.to.Population)
+myPalette4<- colorNumeric(palette = "Blues",
+                          domain=NYC.map1@data$mean_charges)
+myPalette5<- colorNumeric(palette = "Blues",
+                          domain=NYC.map1@data$sum_costs)
+
+NYC.map.layer<- leaflet(NYC.map1) %>%
+    addProviderTiles("CartoDB.DarkMatter") %>%
+    addPolygons(stroke = TRUE, weight = 1, smoothFactor = 0.2,
+                fillOpacity = 0.8, popup =mypopup,
+                color = ~ myPalette3(NYC.map1@data$Patient.to.Population),
+                group ="Patients per 10,000 population") %>%
+    addPolygons(stroke = TRUE, weight = 1, smoothFactor = 0.2,
+                fillOpacity = 0.8, popup =mypopup,
+                color = ~ myPalette1(NYC.map1@data$n),
+                group = "Patients number") %>%
+    addPolygons(stroke = TRUE, weight = 1, smoothFactor = 0.2,
+                fillOpacity = 0.8, popup =mypopup,
+                color = ~ myPalette2(NYC.map1@data$Population),
+                group ="Population") %>%
+    addLayersControl(
+        baseGroups=c("Patients per 10k Population",
+                     "Patients number", "Population"),
+        position = "topleft",
+        options = layersControlOptions(collapsed = FALSE)) %>%
+
+    addLegend(position = "bottomleft", pal = myPalette3,
+              values = NYC.map1@data$Patient.to.Population,
+              title = "Patients per 10k Population") %>%
+
+    fitBounds(-74.3, 40.5, -73.7, 40.9)
+
+NYC.map.layer
+```
+
+
+* MAP2 - Map The Cumulative Total Costs for Mental Health Treatment at County Level
+
+```{r}
+
+NYC.map.cost<- leaflet(NYC.map1) %>%
+    addProviderTiles("CartoDB.DarkMatter") %>%
+    addPolygons(stroke = TRUE, weight = 1, smoothFactor = 0.2,
+                fillOpacity = 0.8, popup =mypopup,
+                color = ~ myPalette5(NYC.map1@data$sum_costs)) %>%
+    addLegend(position = "topleft", pal = myPalette5,
+              values = NYC.map1@data$sum_costs, title = "Accumulated Costs",
+              labFormat = labelFormat(prefix = "$"), opacity = 1 ) %>%
+    fitBounds(-74.3, 40.5, -73.7, 40.9)
+
+NYC.map.cost
+
+```
+
+* MAP3 - Map The Averaged Charges for Mental Health Treatment at County Level
+
+```{r}
+
+NYC.map.charge<- leaflet(NYC.map1) %>%
+    addProviderTiles("CartoDB.DarkMatter") %>%
+    addPolygons(stroke = TRUE, weight = 1, smoothFactor = 0.2,
+                fillOpacity = 0.8, popup =mypopup,
+                color = ~ myPalette4(NYC.map1@data$mean_charges)) %>%
+    addLegend(position = "topleft", pal = myPalette4,
+              values = NYC.map1@data$mean_charges, title = "Avearged Charges",
+              labFormat = labelFormat(prefix = "$"), opacity = 1 ) %>%
+    fitBounds(-74.3, 40.5, -73.7, 40.9)
+
+NYC.map.charge
+```
+
+
+------------------------------------------
+
+### Section 3: Final Plots
+
+#### 1. Final plot 1 - The Racial Difference in Mental Illness of NYC from 2009 - 2014
+
+```{r}
+final_f1
+```
+
+There is a significant racial difference for mental diseases and disorders hospitalization in NYC. 
+
+From 2009 to 2014, Black/African Americans have the highest mental disorder hospitalizations in almost every age group compared with other racial groups. The ANOVA in section 2 also showed that Black/African have significant higher rate of mental disease problems compared with white (p=0.0373768*). This final figure 1 showed the percent differences of patients with mental diseases in each ratial group. This figure excluded the influence of different racial populations in NYC and presented the shocking differences directly. In summary, Black/African American has 0.6% higher population rate with mental diseases in NYC compared with White.
+
+I researched for potential reasons. One possible explanation is genetic difference. However, I didn’t find much evidence to support this assumption. Another possible reason is the bias in mental disorder diagnosis, which means one race is more likely to be diagnosed with severe mental disorders. There are some studies showing that a Black/African American is more likely to be diagnosed as schizophrenia with the same symptom when a White American is diagnosed as depression. However, this observation does not explain my results since I grouped all those possible mental diseases together. I will explore the data further to see if I could come up with a reasonable explanation for racial difference.
+
+
+
+#### Final plot 2 - the Day of Hospitalization Admission for Mental Illness in NYC 2014
+
+
+```{r}
+grid.arrange(P_day_Total, P_day_EM, ncol = 1)
+```
+
+In Final plot 2, the number of patients admitted are much higher during weekday compared with weekend. The trend goes up from Monday to Wednesday and down from Wednesday to Friday. Then it drops significantly on Saturday and keeps going lower on Sunday. This Interesting trend matches the working pressure during our daily life. It indicates that mental illness is highly likely to be triggered by work and study pressure in NYC. 
+
+
+
+#### Final plot 3 - Map The Cumulative Total Costs for Mental Health Treatment at County Level
+
+
+```{r}
+NYC.map.cost
+```
+In the five counties of new york city, Manhattan does not have the largest population, however it has the largest patients number and highest econimic burderns with mental problems compared with other counties. When normalized with the county population, the difference gets more bigger. Manhattan has much more patients with mental diseases and disorders per 10,000 population compared with other counties in NYC. 
+
+This result is not surprising. The condensed population and high living pressure in manhattan might be the leading cause for this difference. Based on this observation, more fundings and services should be distributed in manhattan to improve mental health of new yorkers.
+
+In addition, since the data sets donnot have complete patient zip code information, I used the hospital county information to analyze the economic burdens on county level. I wonder would this be caused by the density and compacity of mental hospitals in Manhattan compared with other counties.
+
+
+
+
+
+
+The gender difference is another interesting observation. I was debating if I should include Maternal Depression into the total mental health data, since it might cause gender bias in the final results. However, even if I included Maternal Depression, male adults still have much higher hospilization rate with mental problems. It also indicates that work and family pressure might be one of the leading cause to induce mental problems in NYC. 
+
+
+------------------------------------------
+
+#### Final Reflections
+
+This dataset is limited in many ways. First, patients hospilization infomation in this dataset does not account for the readmission. Patients with mental diseases and disorders have a high readmission rate, but when I am analyzing this dataset, the readmission rate is missing. Bias might be induced by this missing factor and interesting observation might be ignored without the consideration of readmission.  
+
+In addition, due to the confidential problem, the zip code information for patients are not complete (a lot missing values). For these data points that have patients' zip code information, they can only be showed for the first 3 digits, which makes it impossible to map the mental health profile into community level. New york city is a large and ethnically diverse metropolis. Analysis on county level does not provide enough information refecting the health situation when considering the diverse demographic characteristics of each community. I will continue this project with more detailed data and hopefully to map a better NYC mental health profile.
+
+Future work: anlayze the mental hospital location and capacity in NYC at county level. Hopefully to get a better idea about the funding distributions in NYC for mental health problems.
+
+
+
